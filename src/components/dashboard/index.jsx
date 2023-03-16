@@ -1,32 +1,47 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Posts from '../posts';
+import Pagination from '../pagination';
 
 const Dashboard = ({ user }) => {
   const userLog = user.username;
-  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage] = useState(10);
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    axios.get(`https://jsonplaceholder.typicode.com/posts`).then((response) => setPosts(response.data));
+    const fetchPosts = async () => {
+      setLoading(true);
+      const res = await axios.get('https://jsonplaceholder.typicode.com/posts');
+      setPosts(res.data);
+      setLoading(false);
+    };
+    fetchPosts();
   }, []);
-  const filterProduct = (search) => {
-    const updatedList = posts.filter((post) => post.search === search);
-    // setFilter(updatedList);
-  };
-  console.log(userLog);
-  console.log(user);
-  console.log(posts);
+
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <section className="section">
       <label className="title is-3">Cinta coding</label>
-      <label style={{ marginLeft: '700px' }} className="title-right is-3">
-        Welcome, <b>{userLog}</b>
-      </label>
+      <nav class="breadcrumb is-right" aria-label="breadcrumbs">
+        <ul>
+          <li class="is-active">
+            <label className="title is-5">
+              Welcome, <b>{userLog}</b>
+            </label>
+          </li>
+        </ul>
+      </nav>
       <div className="hero">
-        <div className="container has-text-centered">
+        <div className="container">
           <div className="columns is-centered">
-            <div className="column is-6-desktop">
+            <div className="column">
               <div className="panel has-text-centered">
                 <p className="panel-heading">Post</p>
                 <div className="panel-block">
@@ -37,16 +52,8 @@ const Dashboard = ({ user }) => {
                     </span>
                   </p>
                 </div>
-                <div className="posts-container">
-                  {posts.map((post) => {
-                    return (
-                      <div className="post-card" key={post.id}>
-                        <h2 className="post-title">{post.title}</h2>
-                        <p className="post-body">{post.body}</p>
-                      </div>
-                    );
-                  })}
-                </div>
+                <Posts posts={currentPosts} loading={loading} />
+                <Pagination postsPerPage={postsPerPage} totalPosts={posts.length} paginate={paginate} />
               </div>
             </div>
           </div>

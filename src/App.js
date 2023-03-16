@@ -9,10 +9,10 @@ function App() {
     <Fragment>
       <BrowserRouter>
         <Routes>
-          <Route exact path='/' element={<Login user={user} setUser={setUser} />} />
+          <Route exact path="/" element={<Login user={user} setUser={setUser} />} />
           <Route
             exact
-            path='/dashboard'
+            path="/dashboard"
             element={
               <>
                 <Dashboard user={user} />
