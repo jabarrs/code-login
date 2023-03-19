@@ -1,37 +1,90 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import Posts from '../posts';
-import Pagination from '../pagination';
+import './style.css';
+
+const renderData = (data) => {
+  return (
+    <ul>
+      {data.map((todo, index) => {
+        return <li key={index}>{todo.title}</li>;
+      })}
+    </ul>
+  );
+};
 
 const Dashboard = ({ user }) => {
   const userLog = user.username;
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [postsPerPage] = useState(10);
-  const [posts, setPosts] = useState([]);
+  const [itemsPerPage] = useState(10);
+  const [pageNumberLimit] = useState(3);
+  const [maxPageNumberLimit, setMaxPageNumberLimit] = useState(3);
+  const [minPageNumberLimit, setMinPageNumberLimit] = useState(0);
+
+  const handleClick = (e) => {
+    setCurrentPage(Number(e.target.id));
+  };
+
+  const pages = [];
+  for (let i = 1; i <= Math.ceil(data.length / itemsPerPage); i++) {
+    pages.push(i);
+  }
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItem = data.slice(indexOfFirstItem, indexOfLastItem);
+
+  const renderPageNumber = pages.map((number) => {
+    if (number < maxPageNumberLimit + 1 && number > minPageNumberLimit) {
+      return (
+        <li key={number} id={number} onClick={handleClick} className={currentPage === number ? 'active' : null}>
+          {number}
+        </li>
+      );
+    } else {
+      return null;
+    }
+  });
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      const res = await axios.get('https://jsonplaceholder.typicode.com/posts');
-      setPosts(res.data);
-      setLoading(false);
-    };
-    fetchPosts();
+    fetch('https://jsonplaceholder.typicode.com/posts')
+      .then((response) => response.json())
+      .then((json) => setData(json));
   }, []);
 
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
+  const handleNext = () => {
+    setCurrentPage(currentPage + 1);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    if (currentPage + 1 > maxPageNumberLimit) {
+      setMaxPageNumberLimit(maxPageNumberLimit + pageNumberLimit);
+      setMinPageNumberLimit(minPageNumberLimit + pageNumberLimit);
+    }
+  };
+
+  const handlePrev = () => {
+    setCurrentPage(currentPage - 1);
+
+    if ((currentPage - 1) % pageNumberLimit === 0) {
+      setMaxPageNumberLimit(maxPageNumberLimit - pageNumberLimit);
+      setMinPageNumberLimit(minPageNumberLimit - pageNumberLimit);
+    }
+  };
+
+  let pageIncrementBtn = null;
+  if (pages.length > maxPageNumberLimit) {
+    pageIncrementBtn = <li onClick={handleNext}>&hellip;</li>;
+  }
+
+  let pageDicrementBtn = null;
+  if (minPageNumberLimit >= 1) {
+    pageDicrementBtn = <li onClick={handlePrev}>&hellip;</li>;
+  }
 
   return (
     <section className="section">
       <label className="title is-3">Cinta coding</label>
-      <nav class="breadcrumb is-right" aria-label="breadcrumbs">
+      <nav className="breadcrumb is-right" aria-label="breadcrumbs">
         <ul>
-          <li class="is-active">
+          <li className="is-active">
             <label className="title is-5">
               Welcome, <b>{userLog}</b>
             </label>
@@ -52,8 +105,24 @@ const Dashboard = ({ user }) => {
                     </span>
                   </p>
                 </div>
-                <Posts posts={currentPosts} loading={loading} />
-                <Pagination postsPerPage={postsPerPage} totalPosts={posts.length} paginate={paginate} />
+                <br />
+                {renderData(currentItem)}
+                <br />
+                <ul className="pageNumbers">
+                  <li>
+                    <button onClick={handlePrev} disabled={currentPage === pages[0] ? true : false}>
+                      Prev
+                    </button>
+                  </li>
+                  {pageDicrementBtn}
+                  {renderPageNumber}
+                  {pageIncrementBtn}
+                  <li>
+                    <button onClick={handleNext} disabled={currentPage === pages[pages.length - 1] ? true : false}>
+                      Next
+                    </button>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
